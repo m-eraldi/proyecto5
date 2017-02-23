@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    body {
+      background: lightgrey;
+    }
+    article {
+      display: flex;
+      height: 150px;
+      align-items: center;
+      margin-bottom: 1em;
+    }
+    article div:first-child {
+      width: 200px;
+      height: 150px;
+    }
+    article div {
+      margin-right: 2em;
+    }
+    article div img {
+      display: block;
+      height: 100%;
+    }
+
+    .Form-container {
+      margin-bottom: 1em;
+    }
+
+    .Photo {
+      margin-bottom: 1em;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+    }
+
+    .hide {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="Photo">
+    <div id="my_camera" style="width:320px; height:240px;"></div>
+    <div id="my_result"></div>
+    <a href="javascript:void(take_snapshot())">Take Snapshot</a>
+  </div>
+
+  <div class="Form-container">
+    <form id="Form">
+      <input id="cedula" type="text" name="cedula" placeholder="Cedula:">
+      <input id="nombre" type="text" name="nombre" placeholder="Nombre:">
+      <input id="apellido" type="text" name="apellido" placeholder="Apellido:">
+      <input id="telefono" type="text" name="telefono" placeholder="Teléfono:">
+      <button id="Form-button" class="button-add" onclick="addUser()">Add</button>
+      <button class="button-save hide" onclick="updateUser()">Save</button>
+    </form>
+  </div>
+
+  <section id="Data-container"></section>
+
+  <script src="webcam.js"></script>
+  <script>
+      Webcam.attach( '#my_camera' );
+
+      function take_snapshot() {
+          Webcam.snap( function(data_uri) {
+              avatar = data_uri;
+              document.getElementById('my_camera').innerHTML = '<img src="'+data_uri+'"/>';
+          } );
+      }
+  </script>
+  <script type="text/javascript">
+    var users;
+    var currentUser = {}
+    var avatar = 'default-avatar.png'
+    var formButton = document.getElementById('Form-button');
+    var formCedula = document.getElementById('cedula');
+    var formNombre = document.getElementById('nombre');
+    var formApellido = document.getElementById('apellido');
+    var formTelefono = document.getElementById('telefono');
+    var container = document.getElementById('Data-container');
+    localStorage.users ? users = JSON.parse(localStorage.users) : users = [];
+
+
+    function render() {
+      var html = '';
+      var template = `
+        <article data>
+          <div>
+            <img src=":imgSrc:" alt="" />
+          </div>
+          <div>
+            <p><strong>Cedula: </strong><span>:userCedula:</span></p>
+            <p><strong>Nombre: </strong><span>:userNombre:</span></p>
+            <p><strong>Apellido: </strong><span>:userApellido:</span></p>
+            <p><strong>Telefono: </strong><span>:userTelefono:</span></p>
+          </div>
+          <div>
+            <button onclick="editUser(:userId:)">Edit</button>
+            <button onclick="deleteUser(:userId:)">Delete</button>
+          </div>
+        </article>
+      `
+
+      users.forEach(function (user, index) {
+        var element = template
+          .replace(':userId:', index)
+          .replace(':userId:', index)
+          .replace(':userCedula:', user.formCedula)
+          .replace(':userNombre:', user.formNombre)
+          .replace(':userApellido:', user.formApellido)
+          .replace(':userTelefono:', user.formTelefono)
+          .replace(':imgSrc:', user.formAvatar);
+
+        html = html + element
+      });
+
+      container.innerHTML = html;
+
+    }
+
+
+    function addUser() {
+      var data = {
+        id: users.length,
+        formCedula: formCedula.value,
+        formNombre: formNombre.value,
+        formApellido: formApellido.value,
+        formTelefono: formTelefono.value,
+        formAvatar: avatar
+      }
+
+      users.push(data);
+      users = JSON.stringify(users);
+      localStorage.users = users;
+      users = JSON.parse(localStorage.users);
+    }
+
+    function editUser(id) {
+      currentUser = users[id];
+      formCedula.value = currentUser.formCedula
+      formNombre.value = currentUser.formNombre
+      formApellido.value = currentUser.formApellido
+      formTelefono.value = currentUser.formTelefono
+
+      document.querySelector('.button-save').classList.toggle('hide')
+      document.querySelector('.button-add').classList.toggle('hide')
+    }
+
+    function updateUser() {
+      var data = {
+        id: currentUser.id,
+        formCedula: formCedula.value,
+        formNombre: formNombre.value,
+        formApellido: formApellido.value,
+        formTelefono: formTelefono.value,
+        formAvatar: avatar
+      }
+
+      users[currentUser.id] = data;
+      users = JSON.stringify(users);
+      localStorage.users = users;
+      users = JSON.parse(localStorage.users);
+    }
+
+    function deleteUser(id) {
+      var usersUpdated = []
+
+      users.forEach(function (user, index) {
+        if (index !== id) usersUpdated.push(user);
+      });
+
+      usersUpdated = JSON.stringify(usersUpdated);
+      localStorage.users = usersUpdated;
+      location.reload()
+    }
+
+    render()
+  </script>
+</body>
+</html>
